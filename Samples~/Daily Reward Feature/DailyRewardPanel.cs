@@ -1,23 +1,22 @@
 using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
-using Dreamy.UI;
+using Dreamy.Feature;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Dreamy.DailyReward.Samples
+namespace Dreamy.Feature.DailyReward.Integration
 {
-    public sealed class DailyRewardSamplePanel : UIPanel, IDailyRewardView
+    public sealed class DailyRewardPanel : FeaturePanel, IDailyRewardView
     {
         [SerializeField] private Button claimButton;
         [SerializeField] private Button closeButton;
         [SerializeField] private TMP_Text statusText;
         [SerializeField] private Transform rewardContainer;
-        [SerializeField] private DailyRewardSampleRewardItem rewardItemPrefab;
-        private readonly List<DailyRewardSampleRewardItem> items = new();
+        [SerializeField] private DailyRewardRewardItem rewardItemPrefab;
+        private readonly List<DailyRewardRewardItem> items = new();
 
-        public override bool CanBack => true;
         public event Action ClaimRequested;
         public event Action CloseRequested;
 
@@ -48,7 +47,7 @@ namespace Dreamy.DailyReward.Samples
 
         protected override void OnDestroy()
         {
-            foreach (DailyRewardSampleRewardItem item in items) if (item != null) Destroy(item.gameObject);
+            foreach (DailyRewardRewardItem item in items) if (item != null) Destroy(item.gameObject);
             base.OnDestroy();
         }
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "scheduleId": "default-seven-day",
+  "scheduleId": "daily-reward-seven-day",
   "cycleMode": "Repeat",
   "resetProgressAfterMissedDay": true,
   "rewards": [

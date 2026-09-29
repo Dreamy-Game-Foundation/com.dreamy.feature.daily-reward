@@ -1,11 +1,11 @@
 using Dreamy.Core;
 using UnityEngine;
 
-namespace Dreamy.DailyReward.Samples
+namespace Dreamy.Feature.DailyReward.Integration
 {
-    public sealed class DailyRewardSampleController : MonoBehaviour
+    public sealed class DailyRewardController : MonoBehaviour
     {
-        [SerializeField] private DailyRewardSamplePanel panel;
+        [SerializeField] private DailyRewardPanel panel;
         [SerializeField] private DailyRewardAudioFeedback feedback;
         private DailyRewardPresenter presenter;
 

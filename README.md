@@ -1,6 +1,6 @@
 # Dreamy Daily Reward
 
-`com.dreamy.daily-reward` is an MVP feature package. It owns schedule evaluation and saved claim progress; the host owns its UI, economy transaction, audio, art, and localization.
+`com.dreamy.feature.daily-reward` is an MVP feature package. It owns schedule evaluation and saved claim progress; the host owns its UI, economy transaction, audio, art, and localization.
 
 ## Installation
 
@@ -28,6 +28,6 @@ Prefab variants remain in the host project. No package type references a prefab,
 
 ## Schedule JSON
 
-Copy the sample `dailyRewardSchedule.json` to `Assets/Resources/DataConfig/`. `scheduleId` changes intentionally reset local progress. Reward days must be unique, start at 1, and be consecutive. `resourceId` uses the shared `category.name` convention: `currency.gold`, `currency.gems`, and `item.chest`.
+The `Daily Reward Feature` integration folder is a single copy-ready host folder. Copy it to the game's feature folder, then copy `Resources/DataConfig/dailyRewardSchedule.json` to the host DataConfig location. `scheduleId` changes intentionally reset local progress. Reward days must be unique, start at 1, and be consecutive. `resourceId` uses the shared `category.name` convention: `currency.gold`, `currency.gems`, and `item.chest`.
 
 `SystemRewardClock` uses device UTC time. Register a server-backed `IRewardClock` for authoritative live-service rewards.

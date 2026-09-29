@@ -2,7 +2,7 @@ using Dreamy.Audio;
 using Dreamy.Economy;
 using UnityEngine;
 
-namespace Dreamy.DailyReward.Samples
+namespace Dreamy.Feature.DailyReward.Integration
 {
     public sealed class DailyRewardAudioFeedback : MonoBehaviour, IDailyRewardFeedback
     {

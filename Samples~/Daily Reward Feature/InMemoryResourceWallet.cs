@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Dreamy.Economy;
 
-namespace Dreamy.DailyReward.Samples
+namespace Dreamy.Feature.DailyReward.Integration
 {
     public sealed class InMemoryResourceWallet : IResourceWallet
     {

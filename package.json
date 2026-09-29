@@ -13,6 +13,7 @@
     "com.dreamy.core": "1.1.2",
     "com.dreamy.dataconfig": "0.2.0",
     "com.dreamy.datasave": "0.2.0",
+    "com.dreamy.audio": "0.1.0",
     "com.dreamy.feature": "0.1.0",
     "com.dreamy.feature.economy": "0.1.0"
   },
@@ -27,14 +28,9 @@
   ],
   "samples": [
     {
-      "displayName": "Daily Reward JSON",
-      "description": "A seven-day schedule JSON document ready for a host project's Resources/DataConfig folder.",
-      "path": "Samples~/Daily Reward JSON"
-    },
-    {
-      "displayName": "Daily Reward UIPanel",
-      "description": "Host-side UIPanel, presenter composition, reward-cell view, and optional audio feedback. Requires Dreamy UI and Dreamy Audio.",
-      "path": "Samples~/Daily Reward UIPanel"
+      "displayName": "Daily Reward Feature",
+      "description": "Copy-ready host integration: UIPanel, reward item, controller, audio feedback, in-memory wallet, and JSON configuration.",
+      "path": "Samples~/Daily Reward Feature"
     }
   ]
 }
