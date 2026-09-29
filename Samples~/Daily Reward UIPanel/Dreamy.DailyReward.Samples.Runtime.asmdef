@@ -1,0 +1,7 @@
+{
+  "name": "Dreamy.DailyReward.Samples.Runtime",
+  "rootNamespace": "Dreamy.DailyReward.Samples",
+  "references": ["Dreamy.DailyReward.Runtime", "Dreamy.Economy.Runtime", "Dreamy.Core.Runtime", "Dreamy.UI.Runtime", "Dreamy.Audio.Runtime", "Unity.TextMeshPro", "UnityEngine.UI", "UniTask"],
+  "includePlatforms": [], "excludePlatforms": [], "allowUnsafeCode": false, "overrideReferences": false,
+  "precompiledReferences": [], "autoReferenced": true, "defineConstraints": [], "versionDefines": [], "noEngineReferences": false
+}

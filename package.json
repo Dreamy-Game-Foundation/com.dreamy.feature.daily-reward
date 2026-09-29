@@ -1,0 +1,40 @@
+{
+  "name": "com.dreamy.feature.daily-reward",
+  "version": "0.1.0",
+  "displayName": "Dreamy Daily Reward",
+  "description": "Reusable, MVP-based daily reward feature with JSON configuration and host-owned UI and reward delivery.",
+  "unity": "6000.0",
+  "type": "library",
+  "license": "UNLICENSED",
+  "author": {
+    "name": "Dreamy Studio"
+  },
+  "dependencies": {
+    "com.dreamy.core": "1.1.2",
+    "com.dreamy.dataconfig": "0.2.0",
+    "com.dreamy.datasave": "0.2.0",
+    "com.dreamy.feature": "0.1.0",
+    "com.dreamy.feature.economy": "0.1.0"
+  },
+  "keywords": [
+    "daily-reward",
+    "mvp",
+    "config",
+    "dreamy"
+  ],
+  "testables": [
+    "Tests"
+  ],
+  "samples": [
+    {
+      "displayName": "Daily Reward JSON",
+      "description": "A seven-day schedule JSON document ready for a host project's Resources/DataConfig folder.",
+      "path": "Samples~/Daily Reward JSON"
+    },
+    {
+      "displayName": "Daily Reward UIPanel",
+      "description": "Host-side UIPanel, presenter composition, reward-cell view, and optional audio feedback. Requires Dreamy UI and Dreamy Audio.",
+      "path": "Samples~/Daily Reward UIPanel"
+    }
+  ]
+}

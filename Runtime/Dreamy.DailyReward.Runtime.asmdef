@@ -1,0 +1,21 @@
+{
+  "name": "Dreamy.DailyReward.Runtime",
+  "rootNamespace": "Dreamy.DailyReward",
+  "references": [
+    "Dreamy.Core.Runtime",
+    "Dreamy.DataConfig.Runtime",
+    "Dreamy.Datasave.Runtime",
+    "Dreamy.Economy.Runtime",
+    "Dreamy.Feature.Runtime",
+    "Unity.Newtonsoft.Json"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": true
+}
