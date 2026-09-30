@@ -6,7 +6,6 @@
     "Dreamy.DataConfig.Runtime",
     "Dreamy.Datasave.Runtime",
     "Dreamy.Economy.Runtime",
-    "Dreamy.Feature.Runtime",
     "Unity.Newtonsoft.Json"
   ],
   "includePlatforms": [],

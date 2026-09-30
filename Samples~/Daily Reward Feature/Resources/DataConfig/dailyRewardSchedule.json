@@ -4,12 +4,12 @@
   "cycleMode": "Repeat",
   "resetProgressAfterMissedDay": true,
   "rewards": [
-    { "id": "day-1", "day": 1, "resourceId": "currency.gold", "amount": 100, "isMilestone": false },
-    { "id": "day-2", "day": 2, "resourceId": "currency.gold", "amount": 150, "isMilestone": false },
-    { "id": "day-3", "day": 3, "resourceId": "currency.gold", "amount": 200, "isMilestone": false },
-    { "id": "day-4", "day": 4, "resourceId": "currency.gold", "amount": 250, "isMilestone": false },
-    { "id": "day-5", "day": 5, "resourceId": "currency.gold", "amount": 300, "isMilestone": false },
-    { "id": "day-6", "day": 6, "resourceId": "currency.gold", "amount": 400, "isMilestone": false },
-    { "id": "day-7", "day": 7, "resourceId": "currency.gems", "amount": 10, "isMilestone": true }
+    { "id": "day-1", "day": 1, "resourceId": "currency.coin", "amount": 100, "isMilestone": false },
+    { "id": "day-2", "day": 2, "resourceId": "currency.coin", "amount": 150, "isMilestone": false },
+    { "id": "day-3", "day": 3, "resourceId": "currency.coin", "amount": 200, "isMilestone": false },
+    { "id": "day-4", "day": 4, "resourceId": "currency.coin", "amount": 250, "isMilestone": false },
+    { "id": "day-5", "day": 5, "resourceId": "currency.coin", "amount": 300, "isMilestone": false },
+    { "id": "day-6", "day": 6, "resourceId": "currency.coin", "amount": 400, "isMilestone": false },
+    { "id": "day-7", "day": 7, "resourceId": "currency.gem", "amount": 10, "isMilestone": true }
   ]
 }

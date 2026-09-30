@@ -1,10 +1,10 @@
-using Dreamy.Feature;
+using Dreamy.DailyReward;
 using TMPro;
 using UnityEngine;
 
 namespace Dreamy.Feature.DailyReward.Integration
 {
-    public sealed class DailyRewardRewardItem : FeatureItem
+    public sealed class DailyRewardRewardItem : MonoBehaviour
     {
         [SerializeField] private TMP_Text dayText;
         [SerializeField] private TMP_Text amountText;

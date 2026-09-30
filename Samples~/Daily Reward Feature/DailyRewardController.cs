@@ -1,4 +1,5 @@
 using Dreamy.Core;
+using Dreamy.DailyReward;
 using UnityEngine;
 
 namespace Dreamy.Feature.DailyReward.Integration

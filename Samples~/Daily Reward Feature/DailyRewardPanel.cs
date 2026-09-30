@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
-using Dreamy.Feature;
+using Dreamy.DailyReward;
+using Dreamy.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Dreamy.Feature.DailyReward.Integration
 {
-    public sealed class DailyRewardPanel : FeaturePanel, IDailyRewardView
+    public sealed class DailyRewardPanel : UIPanel, IDailyRewardView
     {
         [SerializeField] private Button claimButton;
         [SerializeField] private Button closeButton;
@@ -17,8 +17,10 @@ namespace Dreamy.Feature.DailyReward.Integration
         [SerializeField] private DailyRewardRewardItem rewardItemPrefab;
         private readonly List<DailyRewardRewardItem> items = new();
 
+        public override bool CanBack => true;
         public event Action ClaimRequested;
         public event Action CloseRequested;
+        public event Action Destroyed;
 
         private void OnEnable()
         {
@@ -26,10 +28,11 @@ namespace Dreamy.Feature.DailyReward.Integration
             closeButton.onClick.AddListener(RequestClose);
         }
 
-        private void OnDisable()
+        protected override void OnDisable()
         {
             claimButton.onClick.RemoveListener(RequestClaim);
             closeButton.onClick.RemoveListener(RequestClose);
+            base.OnDisable();
         }
 
         public void Render(DailyRewardViewState state)
@@ -43,11 +46,12 @@ namespace Dreamy.Feature.DailyReward.Integration
 
         public void ShowClaimResult(DailyRewardClaimResult result) => statusText.text = result.Status.ToString();
 
-        public void Close() => Hide().Forget();
+        public void Close() => Hide();
 
         protected override void OnDestroy()
         {
             foreach (DailyRewardRewardItem item in items) if (item != null) Destroy(item.gameObject);
+            Destroyed?.Invoke();
             base.OnDestroy();
         }
 
