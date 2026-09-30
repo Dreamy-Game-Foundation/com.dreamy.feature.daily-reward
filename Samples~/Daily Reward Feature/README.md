@@ -1,6 +1,6 @@
 # Daily Reward Feature
 
-Copy this entire folder to the host game's feature folder. Create a host prefab from the `FeaturePanel` and `FeatureItem` base prefabs, then attach `DailyRewardPanel`, `DailyRewardRewardItem`, and `DailyRewardController`. Assign two Buttons, a status TMP label, a reward container, a reward-item prefab, and optional `DailyRewardAudioFeedback` IDs.
+Import this sample and move the entire folder to the host game's feature folder. `DailyRewardPanel.prefab` and `DailyRewardItem.prefab` are variants of the base feature prefabs; keep `com.dreamy.feature` and `com.dreamy.ui` installed. Inspect the serialized Buttons, status TMP label, reward container, reward-item prefab, and optional `DailyRewardAudioFeedback` IDs after import.
 
 Copy `Resources/DataConfig/dailyRewardSchedule.json` to the host DataConfig location. In the host installer, call `DailyRewardInstaller.RegisterConfig(dataConfig)` before config initialization. After registering config and save services, register `new InMemoryResourceWallet()` as `IResourceWallet`, then call `DailyRewardInstaller.Install()`.
 
