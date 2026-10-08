@@ -1,4 +1,5 @@
 using System;
+using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using Dreamy.DailyReward;
 using Dreamy.UI;
@@ -46,7 +47,7 @@ namespace Dreamy.Feature.DailyReward.Integration
 
         public void ShowClaimResult(DailyRewardClaimResult result) => statusText.text = result.Status.ToString();
 
-        public void Close() => Hide();
+        public void Close() => Hide().Forget();
 
         protected override void OnDestroy()
         {

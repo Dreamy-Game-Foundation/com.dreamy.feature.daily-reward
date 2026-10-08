@@ -1,7 +1,26 @@
 {
   "name": "Dreamy.Feature.DailyReward.Integration.Runtime",
   "rootNamespace": "Dreamy.Feature.DailyReward.Integration",
-  "references": ["Dreamy.DailyReward.Runtime", "Dreamy.Economy.Runtime", "Dreamy.Core.Runtime", "Dreamy.UI.Runtime", "Dreamy.Audio.Runtime", "Unity.TextMeshPro", "UnityEngine.UI", "UniTask"],
-  "includePlatforms": [], "excludePlatforms": [], "allowUnsafeCode": false, "overrideReferences": false,
-  "precompiledReferences": [], "autoReferenced": true, "defineConstraints": [], "versionDefines": [], "noEngineReferences": false
+  "references": [
+    "Dreamy.DailyReward.Runtime",
+    "Dreamy.Economy.Runtime",
+    "Dreamy.Core.Runtime",
+    "Dreamy.UI.Runtime",
+    "Dreamy.Audio.Runtime",
+    "Unity.TextMeshPro",
+    "UnityEngine.UI",
+    "UniTask",
+    "Dreamy.UI.Presentation",
+    "Dreamy.DataConfig.Runtime",
+    "Dreamy.Datasave.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

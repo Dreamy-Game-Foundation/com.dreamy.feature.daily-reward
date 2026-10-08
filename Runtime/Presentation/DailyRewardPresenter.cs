@@ -1,8 +1,9 @@
 using System;
+using Dreamy.UI;
 
 namespace Dreamy.DailyReward
 {
-    public sealed class DailyRewardPresenter : IDisposable
+    public sealed class DailyRewardPresenter : IPanelPresenter
     {
         private readonly IDailyRewardService service;
         private readonly IDailyRewardView view;

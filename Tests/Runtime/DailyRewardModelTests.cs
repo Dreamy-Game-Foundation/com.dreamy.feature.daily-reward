@@ -100,6 +100,8 @@ namespace Dreamy.DailyReward.Tests
             public List<ResourceGrantRequest> Requests { get; } = new();
             public bool ShouldSucceed { get; set; } = true;
 
+            public bool TryExchange(ResourceExchangeRequest request) => false;
+
             public bool TryGrant(ResourceGrantRequest request)
             {
                 Requests.Add(request);
