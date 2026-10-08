@@ -48,3 +48,18 @@ Dependencies in this example belong to the composition root. No installer create
 After assigning the shared factory to the scene's PanelManager, any caller can open `DailyRewardPanel` with Show/Transition by address, or Show with a prefab. Each opening creates one presenter; close, disable, destroy or failed show release it. Cached reopen creates a fresh presenter. No per-feature controller is required.
 
 Sandbox validation: `python3 LocalPackages/com.dreamy.feature.settings/Tests~/validate-settings.py --shop --features`. This compiles runtime/integration/sample assemblies against their declared references and runs pure managed model/presenter regressions. Unity scene/coroutine/raycast lifecycle still requires Editor/PlayMode validation.
+
+## Cài package
+
+Dùng Unity 6000.0 trở lên. Sandbox đã tham chiếu package bằng `file:../LocalPackages/com.dreamy.feature.daily-reward`. Project khác dùng Package Manager > + > Install package from disk và chọn package.json, hoặc Git URL của repository nội bộ. Cài cả dependency Dreamy/Git vào manifest của game; version dependency không tự cấu hình registry riêng.
+
+Dependency trực tiếp theo package.json:
+
+- `com.dreamy.core` (1.1.2)
+- `com.dreamy.dataconfig` (0.2.0)
+- `com.dreamy.datasave` (0.2.0)
+- `com.dreamy.audio` (0.1.0)
+- `com.dreamy.feature.economy` (0.1.0)
+- `com.dreamy.feature` (0.1.0)
+- `com.dreamy.ui` (0.2.0)
+
