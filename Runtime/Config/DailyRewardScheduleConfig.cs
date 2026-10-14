@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Dreamy.DataConfig;
 using Dreamy.Economy;
+using Dreamy.Economy.Rewards;
 using Newtonsoft.Json;
 
 namespace Dreamy.DailyReward
@@ -10,6 +12,9 @@ namespace Dreamy.DailyReward
     {
         [JsonProperty("scheduleId", Required = Required.Always)]
         private string scheduleId;
+
+        [JsonProperty("revision")]
+        private string revision = "1";
 
         [JsonProperty("cycleMode", Required = Required.Always)]
         private DailyRewardCycleMode cycleMode;
@@ -22,6 +27,27 @@ namespace Dreamy.DailyReward
 
         [JsonIgnore]
         public string ScheduleId => scheduleId;
+
+        [JsonIgnore]
+        public string Revision => revision;
+
+        [JsonIgnore]
+        public string Fingerprint
+        {
+            get
+            {
+                var fields = new List<string> { scheduleId, cycleMode.ToString(), resetProgressAfterMissedDay.ToString() };
+                foreach (DailyRewardEntry entry in rewards)
+                {
+                    fields.Add(entry.Id);
+                    fields.Add(entry.Day.ToString(CultureInfo.InvariantCulture));
+                    fields.Add(entry.IsMilestone.ToString());
+                    fields.Add(entry.RequiresResolution.ToString());
+                    fields.Add(entry.GetBundle().Fingerprint);
+                }
+                return RewardIdentity.Fingerprint(fields.ToArray());
+            }
+        }
 
         [JsonIgnore]
         public DailyRewardCycleMode CycleMode => cycleMode;
@@ -38,6 +64,11 @@ namespace Dreamy.DailyReward
             {
                 throw new DataConfigException(documentName, "scheduleId cannot be empty.");
             }
+
+            if (SchemaVersion != 1)
+                throw new DataConfigException(documentName, "Schedule schemaVersion must be 1.");
+            if (string.IsNullOrWhiteSpace(revision) || !Enum.IsDefined(typeof(DailyRewardCycleMode), cycleMode))
+                throw new DataConfigException(documentName, "Revision and cycle mode must be valid.");
 
             if (rewards == null || rewards.Count == 0)
             {
@@ -73,11 +104,14 @@ namespace Dreamy.DailyReward
         [JsonProperty("day", Required = Required.Always)]
         private int day;
 
-        [JsonProperty("resourceId", Required = Required.Always)]
+        [JsonProperty("resourceId")]
         private string resourceId;
 
-        [JsonProperty("amount", Required = Required.Always)]
-        private long amount;
+        [JsonProperty("amount")]
+        private long? amount;
+
+        [JsonProperty("bundle")]
+        private DailyRewardBundleConfig bundle;
 
         [JsonProperty("isMilestone")]
         private bool isMilestone;
@@ -89,7 +123,20 @@ namespace Dreamy.DailyReward
         public int Day => day;
 
         [JsonIgnore]
-        public ResourceAmount Reward => new(new ResourceId(resourceId), amount);
+        public ResourceAmount Reward => !IsBundle
+            ? new ResourceAmount(new ResourceId(resourceId), amount.Value)
+            : throw new InvalidOperationException("Bundled rewards do not have a single ResourceAmount.");
+
+        [JsonIgnore]
+        public bool IsBundle => bundle != null;
+
+        [JsonIgnore]
+        public bool RequiresResolution => bundle != null && bundle.RequiresResolution;
+
+        public ResolvedRewardBundle GetBundle() => bundle != null
+            ? bundle.Resolve()
+            : new ResolvedRewardBundle(ResolvedRewardBundle.CurrentSchemaVersion, "daily-legacy-v1",
+                new[] { new ResolvedRewardEntry(id, "currency", resourceId, amount.Value) });
 
         [JsonIgnore]
         public bool IsMilestone => isMilestone;
@@ -106,10 +153,65 @@ namespace Dreamy.DailyReward
                 throw new DataConfigException(documentName, "Reward days must start at 1 and be consecutive.");
             }
 
-            if (!ResourceId.TryParse(resourceId, out _) || amount <= 0)
+            if (bundle != null)
+            {
+                if (resourceId != null || amount.HasValue)
+                    throw new DataConfigException(documentName, $"Reward '{id}' declares both legacy and bundle data.");
+                try { bundle.Resolve(); }
+                catch (ArgumentException exception)
+                {
+                    throw new DataConfigException(documentName, $"Reward '{id}' has invalid bundle data: {exception.Message}");
+                }
+                return;
+            }
+
+            if (!ResourceId.TryParse(resourceId, out _) || !amount.HasValue || amount.Value <= 0)
             {
                 throw new DataConfigException(documentName, $"Reward '{id}' has invalid reward data.");
             }
         }
+    }
+
+    [Serializable]
+    public sealed class DailyRewardBundleConfig
+    {
+        [JsonProperty("requiresResolution")]
+        public bool RequiresResolution { get; private set; }
+
+        [JsonProperty("schemaVersion", Required = Required.Always)]
+        private int schemaVersion;
+
+        [JsonProperty("resolverVersion", Required = Required.Always)]
+        private string resolverVersion;
+
+        [JsonProperty("entries", Required = Required.Always)]
+        private List<DailyRewardBundleEntryConfig> entries;
+
+        public ResolvedRewardBundle Resolve()
+        {
+            if (entries == null) throw new ArgumentException("Bundle entries are required.");
+            var resolved = new List<ResolvedRewardEntry>(entries.Count);
+            foreach (DailyRewardBundleEntryConfig entry in entries)
+            {
+                if (entry == null) throw new ArgumentException("Bundle entries cannot be null.");
+                resolved.Add(entry.Resolve());
+            }
+            return new ResolvedRewardBundle(schemaVersion, resolverVersion, resolved);
+        }
+    }
+
+    [Serializable]
+    public sealed class DailyRewardBundleEntryConfig
+    {
+        [JsonProperty("entryId", Required = Required.Always)]
+        private string entryId;
+        [JsonProperty("kindId", Required = Required.Always)]
+        private string kindId;
+        [JsonProperty("targetId", Required = Required.Always)]
+        private string targetId;
+        [JsonProperty("amount", Required = Required.Always)]
+        private long amount;
+
+        internal ResolvedRewardEntry Resolve() => new(entryId, kindId, targetId, amount);
     }
 }

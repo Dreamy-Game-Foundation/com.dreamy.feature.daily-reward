@@ -1,4 +1,5 @@
 using Dreamy.DailyReward;
+using System.Text;
 using TMPro;
 using UnityEngine;
 
@@ -13,7 +14,13 @@ namespace Dreamy.Feature.DailyReward.Integration
         public void Render(DailyRewardItemViewState state)
         {
             dayText.text = $"Day {state.Entry.Day}";
-            amountText.text = $"{state.Entry.Reward.Amount} {state.Entry.Reward.ResourceId}";
+            var text = new StringBuilder();
+            foreach (var reward in state.Entry.GetBundle().Entries)
+            {
+                if (text.Length > 0) text.Append('\n');
+                text.Append(reward.Amount).Append(' ').Append(reward.TargetId);
+            }
+            amountText.text = text.ToString();
             stateText.text = state.Status.ToString();
         }
     }

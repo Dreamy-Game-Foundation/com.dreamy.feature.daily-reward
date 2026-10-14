@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "scheduleId": "daily-bundle-demo",
+  "revision": "1",
+  "cycleMode": "Repeat",
+  "resetProgressAfterMissedDay": true,
+  "rewards": [
+    {
+      "id": "day-1",
+      "day": 1,
+      "bundle": {
+        "schemaVersion": 1,
+        "resolverVersion": "demo-v1",
+        "entries": [
+          { "entryId": "coins", "kindId": "currency", "targetId": "currency.coin", "amount": 100 },
+          { "entryId": "card", "kindId": "item", "targetId": "item.demo-card", "amount": 1 }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "Dreamy.Feature.DailyReward.Bundle.Integration.Runtime",
+  "rootNamespace": "Dreamy.Feature.DailyReward.Integration",
+  "references": [
+    "Dreamy.Datasave.Runtime",
+    "Dreamy.Economy.Runtime"
+  ],
+  "noEngineReferences": true
+}

@@ -6,6 +6,12 @@ Copy `Resources/DataConfig/dailyRewardSchedule.json` to the host DataConfig loca
 
 Replace the in-memory wallet with the host economy service in production. Resource IDs use `category.name`; the shared defaults are `currency.coin` and `currency.gem`.
 
+This is the currency-only legacy route. For recoverable mixed-owner delivery, import
+the optional **Daily Reward Bundle** sample and follow its composition example instead.
+The same panel renders every bundle entry and reports Pending/failure reasons.
+`DailyRewardAudioFeedback` supports both the legacy and optional bundle feedback contracts.
+Use only one schedule JSON at the DataConfig resource address.
+
 ## Production integration and presenter lifecycle
 
 The editable integration entry point is `DailyRewardFeatureInstaller` in Samples~. Runtime `DailyRewardInstaller` remains available for custom UI; games using the supplied views call only the feature installer. All presenters implement the engine-independent `IPanelPresenter` lifecycle in `Dreamy.UI.Presentation`.

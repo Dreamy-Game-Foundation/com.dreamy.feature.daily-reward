@@ -61,10 +61,11 @@ namespace Dreamy.DailyReward
         {
             view.SetClaimInteractable(false);
             DailyRewardClaimResult result = service.Claim();
-            view.ShowClaimResult(result);
             if (result.IsSuccess)
             {
-                feedback?.PlayClaimed(result.Reward.Value);
+                if (result.Reward.HasValue) feedback?.PlayClaimed(result.Reward.Value);
+                else if (result.Bundle != null && feedback is IDailyRewardBundleFeedback bundleFeedback)
+                    bundleFeedback.PlayClaimed(result.Bundle);
             }
             else if (result.Status == DailyRewardClaimStatus.GrantFailed)
             {
@@ -72,6 +73,8 @@ namespace Dreamy.DailyReward
             }
 
             Refresh();
+            // Keep the failure/retry reason visible after rendering the updated state.
+            view.ShowClaimResult(result);
         }
 
         private void Close()

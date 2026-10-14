@@ -3,6 +3,7 @@ using Dreamy.Core;
 using Dreamy.DataConfig;
 using Dreamy.Datasave;
 using Dreamy.Economy;
+using Dreamy.Economy.Rewards;
 
 namespace Dreamy.DailyReward
 {
@@ -35,6 +36,18 @@ namespace Dreamy.DailyReward
                 resourceWallet,
                 clock,
                 saveKey);
+        }
+
+        public static IDailyRewardService Install(
+            DailyRewardScheduleConfig schedule,
+            IDatasaveService datasaveService,
+            IRewardDeliveryGateway gateway,
+            IRewardClock clock,
+            string saveKey = DefaultSaveKey)
+        {
+            DailyRewardModel service = new(schedule, datasaveService, gateway, clock, saveKey);
+            ServiceLocator.Register<IDailyRewardService>(service);
+            return service;
         }
 
         public static IDailyRewardService Install(

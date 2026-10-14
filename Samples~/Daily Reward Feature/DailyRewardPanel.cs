@@ -40,12 +40,18 @@ namespace Dreamy.Feature.DailyReward.Integration
         {
             EnsureItems(state.Rewards.Count);
             for (int index = 0; index < state.Rewards.Count; index++) items[index].Render(state.Rewards[index]);
-            statusText.text = state.CanClaim ? "Reward available" : $"Next reward: {state.NextClaimUtc:yyyy-MM-dd}";
+            for (int index = 0; index < items.Count; index++) items[index].gameObject.SetActive(index < state.Rewards.Count);
+            statusText.text = state.MigrationRequired ? "Schedule migration required"
+                : state.HasPendingClaim ? "Delivery pending - claim to retry"
+                : state.CanClaim ? "Reward available" : $"Next reward: {state.NextClaimUtc:yyyy-MM-dd}";
         }
 
         public void SetClaimInteractable(bool interactable) => claimButton.interactable = interactable;
 
-        public void ShowClaimResult(DailyRewardClaimResult result) => statusText.text = result.Status.ToString();
+        public void ShowClaimResult(DailyRewardClaimResult result) =>
+            statusText.text = result.Reason == Dreamy.Economy.Rewards.RewardDeliveryReason.None
+                ? result.Status.ToString()
+                : $"{result.Status}: {result.Reason}{(result.Retryable ? " - claim to retry" : "")}";
 
         public void Close() => Hide().Forget();
 

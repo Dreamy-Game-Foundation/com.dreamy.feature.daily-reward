@@ -31,8 +31,13 @@
   "samples": [
     {
       "displayName": "Daily Reward Feature",
-      "description": "Copy-ready host integration: UIPanel, reward item, controller, audio feedback, in-memory wallet, and JSON configuration.",
+      "description": "Currency-only host integration: UIPanel, bundle-aware reward item, presenter installer, audio feedback, legacy demo wallet, and JSON configuration.",
       "path": "Samples~/Daily Reward Feature"
+    },
+    {
+      "displayName": "Daily Reward Bundle",
+      "description": "Optional mixed currency/fake-item owner and bundle JSON; uses the Daily Reward Feature UI.",
+      "path": "Samples~/Daily Reward Bundle"
     }
   ]
 }
