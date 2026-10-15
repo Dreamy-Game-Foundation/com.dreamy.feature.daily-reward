@@ -5,6 +5,7 @@ using Dreamy.Economy;
 using Dreamy.Economy.Rewards;
 using Dreamy.DailyReward;
 using Dreamy.UI;
+using Dreamy.Feedback;
 
 namespace Dreamy.Feature.DailyReward.Integration
 {
@@ -12,26 +13,30 @@ namespace Dreamy.Feature.DailyReward.Integration
     {
         public static void RegisterConfig(IDataConfigService config) => DailyRewardInstaller.RegisterConfig(config);
 
-        public static IDailyRewardService Install(PanelPresenterFactory factory, DailyRewardScheduleConfig config, IDatasaveService save, IResourceWallet wallet, IRewardClock clock, string saveKey = DailyRewardInstaller.DefaultSaveKey, IDailyRewardFeedback feedback = null)
+        public static IDailyRewardService Install(PanelPresenterFactory factory, DailyRewardScheduleConfig config, IDatasaveService save, IResourceWallet wallet, IRewardClock clock, string saveKey = DailyRewardInstaller.DefaultSaveKey, IDailyRewardFeedback feedback = null, FeedbackHost feedbackHost = null)
         {
             if (factory == null) throw new ArgumentNullException(nameof(factory));
-            return Install(factory, DailyRewardInstaller.Install(config, save, wallet, clock, saveKey), feedback);
+            return Install(factory, DailyRewardInstaller.Install(config, save, wallet, clock, saveKey), feedback, feedbackHost);
         }
 
-        public static IDailyRewardService Install(PanelPresenterFactory factory, IDailyRewardService service, IDailyRewardFeedback feedback = null)
+        public static IDailyRewardService Install(PanelPresenterFactory factory, IDailyRewardService service, IDailyRewardFeedback feedback = null, FeedbackHost feedbackHost = null)
         {
             if (factory == null) throw new ArgumentNullException(nameof(factory));
             if (service == null) throw new ArgumentNullException(nameof(service));
-            factory.Register<DailyRewardPanel>(view => new DailyRewardPresenter(service, view, feedback));
+            factory.Register<DailyRewardPanel>(view =>
+            {
+                view.BindFeedbackHost(feedbackHost);
+                return new DailyRewardPresenter(service, view, feedback);
+            });
             return service;
         }
 
         public static IDailyRewardService Install(PanelPresenterFactory factory, DailyRewardScheduleConfig config,
             IDatasaveService save, IRewardDeliveryGateway gateway, IRewardClock clock,
-            string saveKey = DailyRewardInstaller.DefaultSaveKey, IDailyRewardFeedback feedback = null)
+            string saveKey = DailyRewardInstaller.DefaultSaveKey, IDailyRewardFeedback feedback = null, FeedbackHost feedbackHost = null)
         {
             if (factory == null) throw new ArgumentNullException(nameof(factory));
-            return Install(factory, DailyRewardInstaller.Install(config, save, gateway, clock, saveKey), feedback);
+            return Install(factory, DailyRewardInstaller.Install(config, save, gateway, clock, saveKey), feedback, feedbackHost);
         }
     }
 }

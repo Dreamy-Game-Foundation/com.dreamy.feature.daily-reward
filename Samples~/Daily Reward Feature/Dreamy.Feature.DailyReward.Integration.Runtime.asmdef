@@ -13,7 +13,10 @@
     "UniTask",
     "Dreamy.UI.Presentation",
     "Dreamy.DataConfig.Runtime",
-    "Dreamy.Datasave.Runtime"
+    "Dreamy.Datasave.Runtime",
+    "Dreamy.Economy.UI.Runtime",
+    "Dreamy.Feedback.Runtime",
+    "Dreamy.Feedback.Contracts"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

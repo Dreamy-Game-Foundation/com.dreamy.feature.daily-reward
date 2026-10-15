@@ -46,3 +46,9 @@ Source và bản import đã có reference Feature.
 Lệnh harness sandbox: `python3 LocalPackages/com.dreamy.feature.settings/Tests~/validate-settings.py --shop --features`.
 Harness managed không thay kiểm chứng Unity scene, coroutine, raycast và vòng đời
 panel thực tế. Giữ nguyên GUID `.meta` khi đồng bộ source/imported sample.
+
+## Resource feedback và bố cục
+
+Import thêm Resource Holders của Economy và Basic Feedback của Feedback để giữ các reference prefab/feedback asset. DailyRewardPanel phát resource feedback khi claim thành công, dùng rewardHolders và rewardFeedback giống Shop. Truyền feedbackHost vào DailyRewardFeatureInstaller.Install để dùng FeedbackHost của game. Holder trong panel tắt autoRefresh để balance đổi sau hiệu ứng; bundle chỉ phát cho entry currency và bỏ qua item do owner khác quản lý. Đóng panel dừng hiệu ứng đang chạy.
+
+Grid tự chọn số cột theo vùng hiển thị và số reward, hỗ trợ portrait/landscape trong SafeArea. Title, status và reward item dùng chữ lớn hơn với auto-size có giới hạn.

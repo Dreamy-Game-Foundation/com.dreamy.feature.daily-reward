@@ -3,6 +3,9 @@ using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using Dreamy.DailyReward;
 using Dreamy.UI;
+using Dreamy.Economy;
+using Dreamy.Economy.UI;
+using Dreamy.Feedback;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,7 +19,44 @@ namespace Dreamy.Feature.DailyReward.Integration
         [SerializeField] private TMP_Text statusText;
         [SerializeField] private Transform rewardContainer;
         [SerializeField] private DailyRewardRewardItem rewardItemPrefab;
+        [Header("Confirmed claim feedback")]
+        [SerializeField] private ResourceUIHolder[] rewardHolders = Array.Empty<ResourceUIHolder>();
+        [SerializeField] private FeedbackPlayer rewardFeedback;
+        private int presentationVersion;
+        private bool presenting;
+        private bool canClaim;
+        private Vector2 lastRewardArea;
+        private int lastItemCount = -1;
+        private int displayedItemCount;
+        private Transform claimableSource;
+        private Transform rewardSource;
         private readonly List<DailyRewardRewardItem> items = new();
+
+        private void LateUpdate()
+        {
+            if (rewardContainer is not RectTransform area || !area.TryGetComponent<GridLayoutGroup>(out var grid)) return;
+            Vector2 size = area.rect.size;
+            int count = Mathf.Max(1, displayedItemCount);
+            if (size == lastRewardArea && count == lastItemCount) return;
+            lastRewardArea = size;
+            lastItemCount = count;
+            float width = Mathf.Max(1, size.x - grid.padding.horizontal);
+            float height = Mathf.Max(1, size.y - grid.padding.vertical);
+            int columns = 1;
+            float bestFit = -1;
+            for (int candidate = 1; candidate <= count; candidate++)
+            {
+                int rows = Mathf.CeilToInt((float)count / candidate);
+                float fit = Mathf.Min((width - grid.spacing.x * (candidate - 1)) / (candidate * 260),
+                    (height - grid.spacing.y * (rows - 1)) / (rows * 220));
+                if (fit > bestFit) { bestFit = fit; columns = candidate; }
+            }
+            int rowCount = Mathf.CeilToInt((float)count / columns);
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = columns;
+            grid.cellSize = new Vector2(Mathf.Max(1, (width - grid.spacing.x * (columns - 1)) / columns),
+                Mathf.Max(1, (height - grid.spacing.y * (rowCount - 1)) / rowCount));
+        }
 
         public override bool CanBack => true;
         public event Action ClaimRequested;
@@ -33,12 +73,19 @@ namespace Dreamy.Feature.DailyReward.Integration
         {
             claimButton.onClick.RemoveListener(RequestClaim);
             closeButton.onClick.RemoveListener(RequestClose);
+            presentationVersion++;
+            presenting = false;
+            rewardFeedback?.StopLast();
             base.OnDisable();
         }
 
         public void Render(DailyRewardViewState state)
         {
             EnsureItems(state.Rewards.Count);
+            displayedItemCount = state.Rewards.Count;
+            claimableSource = null;
+            for (int index = 0; index < state.Rewards.Count; index++)
+                if (state.Rewards[index].Status == DailyRewardItemStatus.Claimable) claimableSource = items[index].transform;
             for (int index = 0; index < state.Rewards.Count; index++) items[index].Render(state.Rewards[index]);
             for (int index = 0; index < items.Count; index++) items[index].gameObject.SetActive(index < state.Rewards.Count);
             statusText.text = state.MigrationRequired ? "Schedule migration required"
@@ -48,12 +95,78 @@ namespace Dreamy.Feature.DailyReward.Integration
                 : state.CanClaim ? "Reward available" : $"Next reward: {state.NextClaimUtc:yyyy-MM-dd}";
         }
 
-        public void SetClaimInteractable(bool interactable) => claimButton.interactable = interactable;
+        public void SetClaimInteractable(bool interactable)
+        {
+            canClaim = interactable;
+            claimButton.interactable = interactable && !presenting;
+        }
 
-        public void ShowClaimResult(DailyRewardClaimResult result) =>
+        public void BindFeedbackHost(FeedbackHost host)
+        {
+            if (rewardFeedback != null && host != null) rewardFeedback.BindHost(host);
+        }
+
+        public void ShowClaimResult(DailyRewardClaimResult result)
+        {
+            if (result.IsSuccess && isActiveAndEnabled)
+                PresentClaimAsync(result).Forget();
+            else ShowResult(result);
+        }
+
+        private void ShowResult(DailyRewardClaimResult result) =>
             statusText.text = result.Reason == Dreamy.Economy.Rewards.RewardDeliveryReason.None
                 ? result.Status.ToString()
                 : $"{result.Status}: {result.Reason}{(result.Retryable ? " - claim to retry" : "")}";
+
+        private async UniTask PresentClaimAsync(DailyRewardClaimResult result)
+        {
+            int version = ++presentationVersion;
+            presenting = true;
+            claimButton.interactable = false;
+            statusText.text = "Collecting reward...";
+            try
+            {
+                // A resolved bundle is authoritative; Reward may also contain its legacy currency entry.
+                if (result.Bundle != null)
+                {
+                    foreach (var entry in result.Bundle.Entries)
+                    {
+                        if (entry.KindId != DatasaveResourceWallet.CurrencyKind ||
+                            !ResourceId.TryParse(entry.TargetId, out var resource)) continue;
+                        await PresentResourceAsync(resource, entry.Amount, version);
+                        if (version != presentationVersion || !isActiveAndEnabled) return;
+                    }
+                }
+                else if (result.Reward.HasValue)
+                    await PresentResourceAsync(result.Reward.Value.ResourceId, result.Reward.Value.Amount, version);
+            }
+            finally
+            {
+                if (version == presentationVersion && isActiveAndEnabled)
+                {
+                    presenting = false;
+                    foreach (var holder in rewardHolders) if (holder != null) holder.RefreshBalance();
+                    claimButton.interactable = canClaim;
+                    ShowResult(result);
+                }
+            }
+        }
+
+        private async UniTask PresentResourceAsync(ResourceId resource, long amount, int version)
+        {
+            foreach (var holder in rewardHolders)
+            {
+                if (holder == null || holder.ResourceId != resource) continue;
+                if (rewardFeedback != null)
+                {
+                    var handle = rewardFeedback.PlayBetween(rewardSource != null ? rewardSource : claimButton.transform,
+                        holder.IconTarget, amount, holder.Icon);
+                    await handle.WaitAsync();
+                    if (version != presentationVersion || !isActiveAndEnabled || handle.Status == FeedbackStatus.Stopped) return;
+                }
+                holder.RefreshBalance();
+            }
+        }
 
         public void Close() => Hide().Forget();
 
@@ -70,7 +183,12 @@ namespace Dreamy.Feature.DailyReward.Integration
             while (items.Count < count) items.Add(Instantiate(rewardItemPrefab, rewardContainer));
         }
 
-        private void RequestClaim() => ClaimRequested?.Invoke();
+        private void RequestClaim()
+        {
+            if (presenting) return;
+            rewardSource = claimableSource;
+            ClaimRequested?.Invoke();
+        }
         private void RequestClose() => CloseRequested?.Invoke();
     }
 }
