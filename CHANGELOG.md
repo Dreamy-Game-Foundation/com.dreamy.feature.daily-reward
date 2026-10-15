@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.2] - 2026-10-15
+
+- Remove DailyRewardPanel.LateUpdate and automatic reward grid resizing; preserve Inspector-authored GridLayoutGroup settings at runtime.
+- Remove unused layout tracking fields and document manual grid configuration.
+
 ## [0.2.1] - 2026-10-15
 
 - Add confirmed-claim resource feedback to the Daily Reward Feature sample, matching Shop presentation for single rewards and currency entries in resolved bundles.

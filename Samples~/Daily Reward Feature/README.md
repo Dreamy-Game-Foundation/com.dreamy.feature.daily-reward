@@ -51,4 +51,4 @@ panel thực tế. Giữ nguyên GUID `.meta` khi đồng bộ source/imported s
 
 Import thêm Resource Holders của Economy và Basic Feedback của Feedback để giữ các reference prefab/feedback asset. DailyRewardPanel phát resource feedback khi claim thành công, dùng rewardHolders và rewardFeedback giống Shop. Truyền feedbackHost vào DailyRewardFeatureInstaller.Install để dùng FeedbackHost của game. Holder trong panel tắt autoRefresh để balance đổi sau hiệu ứng; bundle chỉ phát cho entry currency và bỏ qua item do owner khác quản lý. Đóng panel dừng hiệu ứng đang chạy.
 
-Grid tự chọn số cột theo vùng hiển thị và số reward, hỗ trợ portrait/landscape trong SafeArea. Title, status và reward item dùng chữ lớn hơn với auto-size có giới hạn.
+Cấu hình số cột, kích thước ô và khoảng cách trực tiếp trên GridLayoutGroup trong Inspector; panel không tự điều chỉnh grid khi chạy. Title, status và reward item dùng chữ lớn hơn với auto-size có giới hạn.

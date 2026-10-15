@@ -1,6 +1,6 @@
 {
   "name": "com.dreamy.feature.daily-reward",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "displayName": "Dreamy Daily Reward",
   "description": "Reusable, MVP-based daily reward feature with JSON configuration and host-owned UI and reward delivery.",
   "unity": "6000.0",

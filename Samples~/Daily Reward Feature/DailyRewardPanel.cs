@@ -25,38 +25,9 @@ namespace Dreamy.Feature.DailyReward.Integration
         private int presentationVersion;
         private bool presenting;
         private bool canClaim;
-        private Vector2 lastRewardArea;
-        private int lastItemCount = -1;
-        private int displayedItemCount;
         private Transform claimableSource;
         private Transform rewardSource;
         private readonly List<DailyRewardRewardItem> items = new();
-
-        private void LateUpdate()
-        {
-            if (rewardContainer is not RectTransform area || !area.TryGetComponent<GridLayoutGroup>(out var grid)) return;
-            Vector2 size = area.rect.size;
-            int count = Mathf.Max(1, displayedItemCount);
-            if (size == lastRewardArea && count == lastItemCount) return;
-            lastRewardArea = size;
-            lastItemCount = count;
-            float width = Mathf.Max(1, size.x - grid.padding.horizontal);
-            float height = Mathf.Max(1, size.y - grid.padding.vertical);
-            int columns = 1;
-            float bestFit = -1;
-            for (int candidate = 1; candidate <= count; candidate++)
-            {
-                int rows = Mathf.CeilToInt((float)count / candidate);
-                float fit = Mathf.Min((width - grid.spacing.x * (candidate - 1)) / (candidate * 260),
-                    (height - grid.spacing.y * (rows - 1)) / (rows * 220));
-                if (fit > bestFit) { bestFit = fit; columns = candidate; }
-            }
-            int rowCount = Mathf.CeilToInt((float)count / columns);
-            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = columns;
-            grid.cellSize = new Vector2(Mathf.Max(1, (width - grid.spacing.x * (columns - 1)) / columns),
-                Mathf.Max(1, (height - grid.spacing.y * (rowCount - 1)) / rowCount));
-        }
 
         public override bool CanBack => true;
         public event Action ClaimRequested;
@@ -82,7 +53,6 @@ namespace Dreamy.Feature.DailyReward.Integration
         public void Render(DailyRewardViewState state)
         {
             EnsureItems(state.Rewards.Count);
-            displayedItemCount = state.Rewards.Count;
             claimableSource = null;
             for (int index = 0; index < state.Rewards.Count; index++)
                 if (state.Rewards[index].Status == DailyRewardItemStatus.Claimable) claimableSource = items[index].transform;
