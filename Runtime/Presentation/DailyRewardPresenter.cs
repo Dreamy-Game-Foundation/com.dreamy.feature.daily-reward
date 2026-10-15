@@ -1,14 +1,14 @@
 using System;
+using Dreamy.Feature;
 using Dreamy.UI;
 
 namespace Dreamy.DailyReward
 {
-    public sealed class DailyRewardPresenter : IPanelPresenter
+    public sealed class DailyRewardPresenter : FeaturePresenter, IPanelPresenter
     {
         private readonly IDailyRewardService service;
         private readonly IDailyRewardView view;
         private readonly IDailyRewardFeedback feedback;
-        private bool isBound;
 
         public DailyRewardPresenter(
             IDailyRewardService service,
@@ -20,41 +20,23 @@ namespace Dreamy.DailyReward
             this.feedback = feedback;
         }
 
-        public void Show()
-        {
-            Bind();
-            Refresh();
-        }
-
-        public void Refresh()
+        public override void Refresh()
         {
             DailyRewardViewState state = service.GetState();
             view.Render(state);
             view.SetClaimInteractable(state.CanClaim);
         }
 
-        public void Dispose()
+        protected override void Unbind()
         {
-            if (!isBound)
-            {
-                return;
-            }
-
             view.ClaimRequested -= Claim;
             view.CloseRequested -= Close;
-            isBound = false;
         }
 
-        private void Bind()
+        protected override void Bind()
         {
-            if (isBound)
-            {
-                return;
-            }
-
             view.ClaimRequested += Claim;
             view.CloseRequested += Close;
-            isBound = true;
         }
 
         private void Claim()

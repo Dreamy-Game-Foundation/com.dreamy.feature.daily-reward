@@ -11,6 +11,87 @@ namespace Dreamy.DailyReward.Tests
 {
     public sealed class DailyRewardModelTests
     {
+        [Test]
+        public void ResolvedRecovery_UsesJournalWhenDuplicatePendingPayloadIsInvalid()
+        {
+            var clock = new FakeClock(new DateTime(2026, 10, 14, 12, 0, 0, DateTimeKind.Utc));
+            var save = new InMemoryDatasaveService();
+            var currency = new DatasaveResourceWallet(save, "currency");
+            var item = new FakeItemDestination(save) { Unavailable = true };
+            var model = new DailyRewardModel(BundleSchedule(), save, Gateway(currency, item), clock, "strict");
+            Assert.That(model.Claim().Status, Is.EqualTo(DailyRewardClaimStatus.Pending));
+
+            DailyRewardSaveData persisted = save.Load<DailyRewardSaveData>("strict");
+            Assert.That(persisted.Journal.State, Is.EqualTo(RewardJournalState.Delivering));
+            persisted.PendingClaim.Entries.Clear();
+            persisted.PendingClaim.BundleSchemaVersion = 0;
+            save.Save(persisted, "strict");
+            save = save.Recreate();
+            currency = new DatasaveResourceWallet(save, "currency");
+            item = new FakeItemDestination(save);
+            model = new DailyRewardModel(BundleSchedule(), save, Gateway(currency, item), clock, "strict",
+                new CallbackResolver { Callback = (_, __) => throw new AssertionException("Resolved recovery must not resolve again.") });
+
+            DailyRewardClaimResult result = model.Claim();
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Bundle.Entries, Has.Count.EqualTo(2));
+            Assert.That(currency.GetBalance(new ResourceId("currency.gold")), Is.EqualTo(100));
+            Assert.That(item.Count, Is.EqualTo(1));
+            Assert.That(save.Load<DailyRewardSaveData>("strict").Journal.State, Is.EqualTo(RewardJournalState.Completed));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void IntentRecovery_RejectsInvalidOrChangedPayloadBeforeResolverOrGrant(bool validButChanged)
+        {
+            var clock = new FakeClock(new DateTime(2026, 10, 14, 12, 0, 0, DateTimeKind.Utc));
+            var save = new InMemoryDatasaveService();
+            var currency = new DatasaveResourceWallet(save, "currency");
+            var item = new FakeItemDestination(save);
+            var config = ReadSchedule(BundleJson().Replace("\"schemaVersion\":1", "\"requiresResolution\":true,\"schemaVersion\":1"));
+            var model = new DailyRewardModel(config, save, Gateway(currency, item), clock, "strict");
+            Assert.That(model.Claim().Reason, Is.EqualTo(RewardDeliveryReason.ResolutionRequired));
+            DailyRewardSaveData persisted = save.Load<DailyRewardSaveData>("strict");
+            if (validButChanged) persisted.PendingClaim.Entries[0].Amount++;
+            else persisted.PendingClaim.Entries.Clear();
+            save.Save(persisted, "strict");
+            save = save.Recreate();
+            currency = new DatasaveResourceWallet(save, "currency");
+            item = new FakeItemDestination(save);
+            int calls = 0;
+            model = new DailyRewardModel(config, save, Gateway(currency, item), clock, "strict",
+                new CallbackResolver { Callback = (_, original) => { calls++; return original; } });
+
+            DailyRewardClaimResult result = model.Claim();
+            Assert.That(result.Status, Is.EqualTo(DailyRewardClaimStatus.GrantFailed));
+            Assert.That(result.Reason, Is.EqualTo(validButChanged
+                ? RewardDeliveryReason.PayloadMismatch : RewardDeliveryReason.InvalidJournal));
+            Assert.That(calls, Is.Zero);
+            Assert.That(currency.GetBalance(new ResourceId("currency.gold")), Is.Zero);
+            Assert.That(item.Count, Is.Zero);
+            Assert.That(save.Load<DailyRewardSaveData>("strict").Journal.State, Is.EqualTo(RewardJournalState.IntentPersisted));
+        }
+
+        [Test]
+        public void StopSchedule_AfterFinalClaim_ShowsCompletedAndAllRowsClaimedAfterRecreation()
+        {
+            var clock = new FakeClock(new DateTime(2026, 10, 14, 12, 0, 0, DateTimeKind.Utc));
+            var save = new InMemoryDatasaveService();
+            var config = ReadSchedule(LegacyJson().Replace("Repeat", "StopAfterLastDay"));
+            var model = new DailyRewardModel(config, save, new FakeResourceWallet(), clock, "stop");
+            Assert.That(model.Claim().IsSuccess, Is.True);
+            clock.UtcNow = clock.UtcNow.AddDays(1);
+            Assert.That(model.Claim().IsSuccess, Is.True);
+            model = new DailyRewardModel(config, save.Recreate(), new FakeResourceWallet(), clock, "stop");
+
+            DailyRewardViewState state = model.GetState();
+            Assert.That(state.CanClaim, Is.False);
+            Assert.That(state.HasPendingClaim, Is.False);
+            Assert.That(state.IsCompleted, Is.True);
+            Assert.That(state.Rewards, Has.All.Matches<DailyRewardItemViewState>(r => r.Status == DailyRewardItemStatus.Claimed));
+            Assert.That(model.Claim().Status, Is.EqualTo(DailyRewardClaimStatus.Completed));
+        }
+
         [TestCase(false)]
         [TestCase(true)]
         public void ResolverRunsAfterIntentAndReplaysOnlyUntilResolvedSaveCommits(bool failResolvedSave)

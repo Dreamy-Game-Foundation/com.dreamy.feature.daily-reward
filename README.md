@@ -1,38 +1,38 @@
 # Dreamy Daily Reward
 
-`com.dreamy.feature.daily-reward` is an MVP feature package. It owns schedule evaluation and saved claim progress; the host owns its UI, economy transaction, audio, art, and localization.
+Package quản lý lịch thưởng và tiến trình nhận đã lưu theo mô hình MVP. Game sở
+hữu UI, giao dịch economy, audio, hình ảnh và bản địa hoá.
 
-## Installation
+## Cài đặt
 
-Add the package and dependencies to the host manifest. During bootstrap, register the schedule before `IDataConfigService.InitializeAsync`:
+Cài package cùng dependency trong package.json. Đăng ký lịch trước khi gọi
+IDataConfigService.InitializeAsync:
 
 ```csharp
 DailyRewardInstaller.RegisterConfig(dataConfig);
 ```
 
-After `IDataConfigService` and `IDatasaveService` are registered, register the host economy adapter as `IResourceWallet`, optionally register an `IRewardClock`, then call:
+Sau khi config/save sẵn sàng, đăng ký wallet của game dưới IResourceWallet,
+tuỳ chọn đăng ký IRewardClock, rồi cài service:
 
 ```csharp
 DailyRewardInstaller.Install();
 ```
 
-Register a host `IResourceWallet`. Its `ResourceGrantRequest.TransactionId` must be idempotent: an already-processed transaction succeeds without granting again. This is required because an economy transaction and a local file save cannot be one atomic operation.
+Đây là đường legacy. Wallet cần xử lý TransactionId đã nhận mà không cấp lại.
+Identity cũ giữ dạng scheduleId:cycle:entryId. Nếu grant đã thành công nhưng save
+claim lỗi, Daily giữ nguyên state đã load nhưng wallet có thể đã cấp thưởng.
+Không có bảo đảm recovery hồi tố cho grant chưa được ghi nhận qua midnight;
+không biến bool wallet bất kỳ thành strict gateway.
 
-This legacy overload retains `scheduleId:cycle:entryId` transaction IDs and its weaker
-wallet contract. A failed claim-save leaves Daily's loaded state unchanged, but a legacy
-wallet may already have granted; the package cannot recover an unrecorded grant across
-midnight. It does not wrap an arbitrary bool wallet into a strict gateway.
+## Nhận bundle có recovery
 
-## Strict bundle delivery
+Dùng DailyRewardModel(schedule, save, gateway, clock, saveKey) hoặc overload gateway
+của DailyRewardInstaller.Install. Game cung cấp IRewardDestination qua
+RewardDeliveryGateway; mỗi owner phải lưu effect và receipt fingerprint trong cùng
+save document. Cài đúng phiên bản Economy có các API Rewards theo dependency hiện tại.
 
-Use the overload `DailyRewardModel(schedule, save, IRewardDeliveryGateway gateway, clock, saveKey)`
-or `DailyRewardInstaller.Install(schedule, save, gateway, clock, saveKey)`.
-The host supplies durable `IRewardDestination` owners through Economy's `RewardDeliveryGateway`.
-Each owner must persist reward effects and transaction fingerprint in the same owner save.
-These APIs require the coordinated, unreleased Economy reward source. Published dependency
-versions will be updated together at the release gate; the old Economy tag does not supply them.
-
-Each Daily entry declares either `resourceId`/`amount` or `bundle`, never both:
+Mỗi entry khai báo resourceId/amount hoặc bundle, không khai báo đồng thời:
 
 ```json
 {
@@ -55,75 +55,73 @@ Each Daily entry declares either `resourceId`/`amount` or `bundle`, never both:
 }
 ```
 
-Bundles are concrete resolved rewards, not a random resolver protocol. Known kinds and
-targets are validated by the gateway before the first delivery. Strict request IDs use
-Economy's versioned length-prefixed identity with save key, daily, schedule ID, cycle,
-and Daily entry ID. Revision and UTC date do not create a new reward identity.
+Bundle chứa reward cụ thể đã resolve. Gateway kiểm kind/target trước delivery.
+Request ID dùng encoding length-prefixed của Economy: save key, daily, schedule ID,
+cycle và entry ID. Revision hoặc ngày UTC không tạo identity mới để cấp lại reward.
 
-Save version 2 embeds the active schedule, original pending date/cycle/revision,
-intended next transition, fixed payload and Economy journal in one Daily document.
-Every persistence callback uses a detached candidate. Final progress and Completed
-journal persist together. `Claim()` resumes pending work before evaluating the current
-date or configuration, so a restart across midnight finishes the original claim date.
-It reports `Pending` plus `Reason`/`Retryable`, and `Busy` for synchronous reentry.
-`GetState().HasPendingClaim` exposes retry; no claim is reported successful before the
-final save. The service is synchronous/main-thread-only, not thread-safe.
+Save v2 chứa active schedule, ngày/kỳ/revision gốc của pending claim, transition
+kế tiếp, payload cố định và journal trong cùng Daily document. Callback persistence
+lưu detached candidate; tiến trình cuối và journal Completed được commit cùng nhau.
+Claim phục hồi pending trước khi xét ngày/config mới; qua midnight vẫn hoàn tất
+claim với ngày gốc. Kết quả có Pending, Reason/Retryable hoặc Busy khi gọi lồng.
+HasPendingClaim cho biết còn việc cần retry; chỉ báo thành công sau final save.
+Service đồng bộ trên main thread, không thread-safe.
 
-Version 1 saves preserve schedule ID, cycle, next index and last-claim date; they cannot
-reconstruct a historical revision or a legacy torn grant. A changed schedule ID or invalid
-counter requires an explicit host migration. Changed reward content/order/removals under
-the same identity keep the saved active snapshot for the current cycle and adopt the new
-revision at the next cycle. StopAfterLastDay never silently restarts. No progress is reset
-just because configuration changed. Keep save/owner backups from the same generation;
-independently rolling back an owner receipt ledger is outside recovery guarantees.
+Trước khi gọi resolver/owner, payload intent phải khớp fingerprint đã lưu.
+Dữ liệu sai trả InvalidJournal; payload thay đổi trả PayloadMismatch, không grant.
+Sau Resolve, journal là authority payload; bản trùng trong PendingClaim chỉ giữ
+để tương thích save và không được đọc khi delivery. IsCompleted xác định lịch
+StopAfterLastDay đã xong; các dòng giữ Claimed và sample hiện All rewards claimed.
 
-`DailyRewardClaimResult.Reward` remains available for legacy entries.
-Bundle success instead exposes `Bundle`; do not assume `Reward.Value` exists.
-Existing `IDailyRewardFeedback` implementations remain valid. Optional
-`IDailyRewardBundleFeedback` receives bundle success; the sample audio adapter supports both.
+Save v1 giữ schedule ID, cycle, next index và ngày claim cuối; không dựng lại được
+revision lịch sử hoặc legacy grant bị đứt bước lưu. Thay schedule ID hay counter
+không hợp lệ cần migration rõ ràng. Thay nội dung/thứ tự reward cùng identity giữ
+snapshot chu kỳ hiện tại, áp dụng config mới ở chu kỳ tiếp theo. StopAfterLastDay
+không tự khởi động lại. Backup owner/journal phải cùng generation; restore ledger
+riêng nằm ngoài bảo đảm recovery.
 
-## Host UI
+DailyRewardClaimResult.Reward vẫn dành cho entry legacy. Bundle thành công trả
+Bundle; không mặc định Reward.Value tồn tại. IDailyRewardFeedback cũ vẫn dùng
+được; IDailyRewardBundleFeedback tuỳ chọn nhận feedback cho bundle.
 
-Implement `IDailyRewardView` in any host-side MonoBehaviour. It may inherit `Dreamy.UI.UIPanel`, use UGUI, UI Toolkit, or a custom UI stack. Create a `DailyRewardPresenter` with `ServiceLocator.Get<IDailyRewardService>()`, call `Show()` after the view is ready, and call `Dispose()` in `OnDestroy`.
+## UI và sample của game
 
-Audio is host-owned. Pass an optional `IDailyRewardFeedback` adapter to the presenter; the UIPanel sample includes an Audio adapter without adding an Audio dependency to runtime.
+Triển khai IDailyRewardView trên MonoBehaviour/UI riêng, có thể kế thừa UIPanel.
+Tạo DailyRewardPresenter với service của root, gọi Show khi view sẵn sàng và Dispose
+khi đóng/teardown. Audio do adapter IDailyRewardFeedback của game cung cấp.
+Runtime không tham chiếu prefab hay component hiển thị.
 
-Prefab variants remain in the host project. No package type references a prefab, `MonoBehaviour`, or visual component.
+Import Daily Reward Feature cho panel/row. Daily Reward Bundle cung cấp owner item
+mẫu và config thay thế, không tạo service/UI thứ hai. Chỉ giữ một JSON tại
+Resources/DataConfig/dailyRewardSchedule.json; ngày bắt đầu từ 1 và liên tiếp.
+SystemRewardClock dùng UTC của thiết bị; không phải đồng hồ chống gian lận.
 
-## Schedule JSON
+## Tích hợp vào game và vòng đời presenter
 
-The `Daily Reward Feature` integration folder is a single copy-ready host folder. Copy it to the game's feature folder, then copy `Resources/DataConfig/dailyRewardSchedule.json` to the host DataConfig location. Reward days must start at 1 and be consecutive. Legacy `resourceId` uses the shared `category.name` convention. The optional `Daily Reward Bundle` sample adds a durable fake-item owner and alternative JSON without a second UI/service. Select one schedule JSON, not both.
-
-`SystemRewardClock` uses device UTC time. Register a server-backed `IRewardClock` for authoritative live-service rewards.
-
-## Production integration and presenter lifecycle
-
-The editable integration entry point is `DailyRewardFeatureInstaller` in Samples~. Runtime `DailyRewardInstaller` remains available for custom UI; games using the supplied views call only the feature installer. All presenters implement the engine-independent `IPanelPresenter` lifecycle in `Dreamy.UI.Presentation`.
+Dùng DailyRewardFeatureInstaller trong sample khi dùng view đi kèm;
+DailyRewardInstaller dành cho UI tự viết. Dependencies được tạo ở composition root:
 
 ```csharp
-DailyRewardFeatureInstaller.RegisterConfig(dataConfig); // Before dataConfig.InitializeAsync.
-// After config/save/wallet readiness, using the same factory as other features:
+DailyRewardFeatureInstaller.RegisterConfig(dataConfig); // Trước dataConfig.InitializeAsync.
+// Sau khi config/save/wallet sẵn sàng, dùng factory chung của các tính năng:
 DailyRewardFeatureInstaller.Install(factory, config, save, wallet, clock);
-// Or reuse a host-owned service: DailyRewardFeatureInstaller.Install(factory, service);
+// Hoặc dùng lại service do game sở hữu: DailyRewardFeatureInstaller.Install(factory, service);
 ```
 
-Dependencies in this example belong to the composition root. No installer creates an in-memory wallet/save fallback. Model/service own rewards and checkpoints; views only render state and emit intent. Add direct asmdef references to the integration assembly and Dreamy.UI.Presentation wherever their APIs are used.
+Presenter kế thừa FeaturePresenter và triển khai IPanelPresenter; view kế thừa
+IFeatureView<TState> qua IDailyRewardView. Thêm reference trực tiếp tới
+Dreamy.Feature.Runtime, Dreamy.UI.Presentation và assembly tích hợp ở nơi dùng API.
 
-After assigning the shared factory to the scene's PanelManager, any caller can open `DailyRewardPanel` with Show/Transition by address, or Show with a prefab. Each opening creates one presenter; close, disable, destroy or failed show release it. Cached reopen creates a fresh presenter. No per-feature controller is required.
+Gán factory chung cho PanelManager. Mỗi lần mở panel có một presenter; đóng,
+disable, destroy hoặc Show lỗi sẽ giải phóng presenter; mở lại cache tạo presenter
+mới. Service/model sống theo root, không tạo lại khi mở panel.
 
-Sandbox validation: `python3 LocalPackages/com.dreamy.feature.settings/Tests~/validate-settings.py --shop --features`. This compiles runtime/integration/sample assemblies against their declared references and runs pure managed model/presenter regressions. Unity scene/coroutine/raycast lifecycle still requires Editor/PlayMode validation.
+## Kiểm chứng và dependency
 
-## Cài package
+Dependency và version chính xác nằm trong package.json; thêm các dependency Git
+vào manifest game khi registry không cung cấp. Sandbox dùng local file dependencies.
 
-Dùng Unity 6000.0 trở lên. Sandbox đã tham chiếu package bằng `file:../LocalPackages/com.dreamy.feature.daily-reward`. Project khác dùng Package Manager > + > Install package from disk và chọn package.json, hoặc Git URL của repository nội bộ. Cài cả dependency Dreamy/Git vào manifest của game; version dependency không tự cấu hình registry riêng.
-
-Dependency trực tiếp theo package.json:
-
-- `com.dreamy.core` (1.1.2)
-- `com.dreamy.dataconfig` (0.2.0)
-- `com.dreamy.datasave` (0.2.0)
-- `com.dreamy.audio` (0.1.0)
-- `com.dreamy.feature.economy` (0.1.0 metadata; strict source release pending)
-- `com.dreamy.feature` (0.1.0)
-- `com.dreamy.ui` (0.2.0)
-
+Có thể chạy `python3 LocalPackages/com.dreamy.feature.settings/Tests~/validate-settings.py --shop --features`
+để compile managed assemblies và regression theo harness. Kiểm tra scene, coroutine,
+raycast, import và vòng đời UI bằng Editor/PlayMode riêng. Kết quả source không
+thay thế kiểm chứng migration, build/device hoặc consumer cụ thể.

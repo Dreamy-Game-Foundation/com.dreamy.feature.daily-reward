@@ -2,6 +2,7 @@
   "name": "Dreamy.DailyReward.Runtime.Tests",
   "rootNamespace": "Dreamy.DailyReward.Tests",
   "references": [
+    "Dreamy.Feature.Runtime",
     "Dreamy.DailyReward.Runtime",
     "Dreamy.Datasave.Runtime",
     "Dreamy.Economy.Runtime",

@@ -1,6 +1,6 @@
 {
   "name": "com.dreamy.feature.daily-reward",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "displayName": "Dreamy Daily Reward",
   "description": "Reusable, MVP-based daily reward feature with JSON configuration and host-owned UI and reward delivery.",
   "unity": "6000.0",
@@ -14,8 +14,8 @@
     "com.dreamy.dataconfig": "0.2.0",
     "com.dreamy.datasave": "0.2.0",
     "com.dreamy.audio": "0.1.0",
-    "com.dreamy.feature.economy": "0.1.0",
-    "com.dreamy.feature": "0.1.0",
+    "com.dreamy.feature.economy": "0.3.0",
+    "com.dreamy.feature": "0.2.0",
     "com.dreamy.ui": "0.2.0",
     "com.cysharp.unitask": "2.5.10"
   },

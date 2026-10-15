@@ -155,9 +155,19 @@ namespace Dreamy.DailyReward
         {
             if (save.PendingClaim == null || save.Journal == null || !save.Journal.IsValid())
                 return DailyRewardClaimResult.Delivery(RewardDeliveryResult.Failed(RewardDeliveryReason.InvalidJournal));
-            ResolvedRewardBundle bundle = save.PendingClaim.GetBundle();
+            ResolvedRewardBundle bundle;
             if (save.Journal.State == RewardJournalState.IntentPersisted)
             {
+                try { bundle = save.PendingClaim.GetBundle(); }
+                catch (ArgumentException)
+                {
+                    return DailyRewardClaimResult.Delivery(RewardDeliveryResult.Failed(RewardDeliveryReason.InvalidJournal));
+                }
+                // The persisted intent binds the original payload before any authority call.
+                // A modified duplicate snapshot must not turn the same request into a new grant.
+                string fingerprint = RewardIdentity.Fingerprint("daily-claim", save.Journal.RequestId, bundle.Fingerprint);
+                if (!string.Equals(fingerprint, save.Journal.RequestFingerprint, StringComparison.Ordinal))
+                    return DailyRewardClaimResult.Delivery(RewardDeliveryResult.Failed(RewardDeliveryReason.PayloadMismatch));
                 if (save.PendingClaim.RequiresResolution && resolver == null)
                     return DailyRewardClaimResult.Delivery(RewardDeliveryResult.Pending(RewardDeliveryReason.ResolutionRequired));
                 if (resolver != null)
@@ -246,12 +256,13 @@ namespace Dreamy.DailyReward
 
             return new DailyRewardViewState(items,
                 !busy && (HasPendingClaim ? gateway != null : !RequiresMigration && progress.CanClaim),
-                progress.NextClaimUtc, HasPendingClaim, busy, RequiresMigration);
+                progress.NextClaimUtc, HasPendingClaim, busy, RequiresMigration, progress.IsCompleted);
         }
 
         private DailyRewardItemStatus ResolveItemStatus(int index, Progress progress)
         {
-            if (progress.IsCompleted || index > progress.NextRewardIndex)
+            if (progress.IsCompleted) return DailyRewardItemStatus.Claimed;
+            if (index > progress.NextRewardIndex)
             {
                 return DailyRewardItemStatus.Locked;
             }

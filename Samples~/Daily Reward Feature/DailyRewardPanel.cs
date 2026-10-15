@@ -43,6 +43,8 @@ namespace Dreamy.Feature.DailyReward.Integration
             for (int index = 0; index < items.Count; index++) items[index].gameObject.SetActive(index < state.Rewards.Count);
             statusText.text = state.MigrationRequired ? "Schedule migration required"
                 : state.HasPendingClaim ? "Delivery pending - claim to retry"
+                : state.IsBusy ? "Claim in progress"
+                : state.IsCompleted ? "All rewards claimed"
                 : state.CanClaim ? "Reward available" : $"Next reward: {state.NextClaimUtc:yyyy-MM-dd}";
         }
 

@@ -2,6 +2,7 @@
   "name": "Dreamy.Feature.DailyReward.Integration.Runtime",
   "rootNamespace": "Dreamy.Feature.DailyReward.Integration",
   "references": [
+    "Dreamy.Feature.Runtime",
     "Dreamy.DailyReward.Runtime",
     "Dreamy.Economy.Runtime",
     "Dreamy.Core.Runtime",

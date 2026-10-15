@@ -6,7 +6,7 @@ namespace Dreamy.DailyReward
     public sealed class DailyRewardViewState
     {
         public DailyRewardViewState(IReadOnlyList<DailyRewardItemViewState> rewards, bool canClaim, DateTime nextClaimUtc,
-            bool hasPendingClaim = false, bool isBusy = false, bool migrationRequired = false)
+            bool hasPendingClaim = false, bool isBusy = false, bool migrationRequired = false, bool isCompleted = false)
         {
             Rewards = rewards ?? throw new ArgumentNullException(nameof(rewards));
             CanClaim = canClaim;
@@ -14,6 +14,7 @@ namespace Dreamy.DailyReward
             HasPendingClaim = hasPendingClaim;
             IsBusy = isBusy;
             MigrationRequired = migrationRequired;
+            IsCompleted = isCompleted;
         }
 
         public IReadOnlyList<DailyRewardItemViewState> Rewards { get; }
@@ -22,6 +23,7 @@ namespace Dreamy.DailyReward
         public bool HasPendingClaim { get; }
         public bool IsBusy { get; }
         public bool MigrationRequired { get; }
+        public bool IsCompleted { get; }
     }
 
     public readonly struct DailyRewardItemViewState
