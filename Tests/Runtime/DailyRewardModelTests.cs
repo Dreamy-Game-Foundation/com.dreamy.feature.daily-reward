@@ -12,6 +12,40 @@ namespace Dreamy.DailyReward.Tests
     public sealed class DailyRewardModelTests
     {
         [Test]
+        public void ClaimOffer_ExpiresAcrossMidnightWithoutClaimingTheNextDay()
+        {
+            var clock=new FakeClock(new DateTime(2026,10,20,23,59,0,DateTimeKind.Utc));
+            var store=new InMemoryDatasaveService();var wallet=new DatasaveResourceWallet(store,"wallet");
+            var model=new DailyRewardModel(ReadSchedule(LegacyJson()),store,new RewardDeliveryGateway(new IRewardDestination[]{wallet}),clock,"offers");
+            var offer=model.GetClaimOffer();Assert.That(offer,Is.Not.Null);
+            clock.UtcNow=clock.UtcNow.AddDays(1);
+            Assert.That(model.ClaimOffer(offer.Token,offer.Fingerprint).Status,Is.EqualTo(DailyRewardClaimStatus.NotAvailable));
+            Assert.That(wallet.GetBalance(new ResourceId("currency.gold")),Is.Zero);
+        }
+        [Test]
+        public void ClaimOffer_CompletedTokenQueriesOriginalRewardAcrossRestart()
+        {
+            var clock=new FakeClock(new DateTime(2026,10,20,12,0,0,DateTimeKind.Utc));
+            var store=new InMemoryDatasaveService();var wallet=new DatasaveResourceWallet(store,"wallet");
+            var model=new DailyRewardModel(ReadSchedule(LegacyJson()),store,new RewardDeliveryGateway(new IRewardDestination[]{wallet}),clock,"offers");
+            var offer=model.GetClaimOffer();Assert.That(model.ClaimOffer(offer.Token,offer.Fingerprint).IsSuccess,Is.True);
+            store=store.Recreate();wallet=new DatasaveResourceWallet(store,"wallet");
+            model=new DailyRewardModel(ReadSchedule(LegacyJson()),store,new RewardDeliveryGateway(new IRewardDestination[]{wallet}),clock,"offers");
+            Assert.That(model.GetClaimOffer(offer.Token).IsCompleted,Is.True);
+            Assert.That(model.ClaimOffer(offer.Token,offer.Fingerprint).Status,Is.EqualTo(DailyRewardClaimStatus.NotAvailable));
+            Assert.That(wallet.GetBalance(new ResourceId("currency.gold")),Is.EqualTo(100));
+        }
+        [Test]
+        public void ClaimOffer_RejectsDifferentFingerprint()
+        {
+            var clock=new FakeClock(new DateTime(2026,10,20,12,0,0,DateTimeKind.Utc));
+            var store=new InMemoryDatasaveService();var wallet=new DatasaveResourceWallet(store,"wallet");
+            var model=new DailyRewardModel(ReadSchedule(LegacyJson()),store,new RewardDeliveryGateway(new IRewardDestination[]{wallet}),clock,"offers");
+            Assert.That(model.ClaimOffer(model.GetClaimOffer().Token,"wrong").Status,Is.EqualTo(DailyRewardClaimStatus.NotAvailable));
+            Assert.That(wallet.GetBalance(new ResourceId("currency.gold")),Is.Zero);
+        }
+
+        [Test]
         public void ResolvedRecovery_UsesJournalWhenDuplicatePendingPayloadIsInvalid()
         {
             var clock = new FakeClock(new DateTime(2026, 10, 14, 12, 0, 0, DateTimeKind.Utc));

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased — 0.3.0 candidate
+
+- Add optional IDailyRewardClaimOffers and an engine-independent DailyRewardClaimSource. Expected date/cycle/entry/revision tokens prevent a stale confirmation from claiming a different day; strict concrete bundles only. Existing Claim API/save v2 remains unchanged.
+- New presentation integration requires Economy 0.7.0 and UniTask; release pins must be updated together.
+
 ## [0.2.2] - 2026-10-15
 
 - Remove DailyRewardPanel.LateUpdate and automatic reward grid resizing; preserve Inspector-authored GridLayoutGroup settings at runtime.

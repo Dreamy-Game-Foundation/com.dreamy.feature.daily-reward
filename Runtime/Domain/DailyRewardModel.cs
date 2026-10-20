@@ -7,7 +7,7 @@ using Dreamy.Economy.Rewards;
 
 namespace Dreamy.DailyReward
 {
-    public sealed class DailyRewardModel : IDailyRewardService
+    public sealed partial class DailyRewardModel : IDailyRewardService, IDailyRewardClaimOffers
     {
         private readonly DailyRewardScheduleConfig schedule;
         private readonly IDatasaveService datasave;
@@ -74,12 +74,20 @@ namespace Dreamy.DailyReward
             return CreateState(progress, active);
         }
 
-        public DailyRewardClaimResult Claim()
+        public DailyRewardClaimResult Claim() => ClaimCore(null, null);
+
+        private DailyRewardClaimResult ClaimCore(string expectedToken, string expectedFingerprint)
         {
             if (busy) return DailyRewardClaimResult.Busy();
             busy = true;
             try
             {
+                if (expectedToken != null)
+                {
+                    var offer = GetClaimOfferCore(expectedToken, null);
+                    if (offer == null || offer.IsCompleted || offer.Fingerprint != expectedFingerprint)
+                        return DailyRewardClaimResult.NotAvailable();
+                }
                 // Pending recovery always precedes date, revision, and eligibility evaluation.
                 if (HasPendingClaim)
                     return gateway == null
@@ -88,6 +96,7 @@ namespace Dreamy.DailyReward
 
                 if (RequiresMigration) return DailyRewardClaimResult.MigrationRequired();
                 DateTime today = clock.UtcNow.Date;
+                if (expectedToken != null && GetClaimOfferCore(expectedToken, today) == null) return DailyRewardClaimResult.NotAvailable();
                 DailyRewardScheduleConfig active = GetActiveSchedule();
                 Progress progress = GetProgress(today, active);
                 if (progress.IsCompleted) return DailyRewardClaimResult.Completed();

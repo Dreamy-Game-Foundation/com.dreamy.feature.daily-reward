@@ -1,0 +1,11 @@
+{
+  "name": "Dreamy.DailyReward.RewardPresentation",
+  "rootNamespace": "Dreamy.DailyReward.Presentation",
+  "references": [
+    "Dreamy.DailyReward.Runtime",
+    "Dreamy.Economy.Runtime",
+    "Dreamy.Economy.UI.Integration",
+    "UniTask"
+  ],
+  "noEngineReferences": true
+}
