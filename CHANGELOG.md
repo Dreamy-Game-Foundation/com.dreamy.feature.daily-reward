@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased — 0.3.0 candidate
+## [0.3.0] - 2026-10-20
+
+Source version was prepared in commit 140f24e; changelog classification corrected on 2026-11-10. No additional version bump or published tag is implied.
 
 - Add optional IDailyRewardClaimOffers and an engine-independent DailyRewardClaimSource. Expected date/cycle/entry/revision tokens prevent a stale confirmation from claiming a different day; strict concrete bundles only. Existing Claim API/save v2 remains unchanged.
 - New presentation integration requires Economy 0.7.0 and UniTask; release pins must be updated together.
